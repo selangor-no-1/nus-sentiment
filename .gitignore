@@ -3,3 +3,4 @@ todo.txt
 __pycache__
 .env
 env/
+.streamlit/secrets.toml

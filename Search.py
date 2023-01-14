@@ -3,6 +3,7 @@ import pandas as pd
 import transformers
 import re
 import praw
+from deta import Deta
 from utils.reddit import reddit_agent
 from utils.helpers import more_than_two_codes 
 from components.post_card import display_post, paginator
@@ -21,6 +22,10 @@ nus_sub = reddit.subreddit("nus")
 
 # instatntiate model
 _, tokenizer, nlp  = download_model()
+
+# instantiate deta agent
+deta = Deta(st.secrets["deta_key"])
+db = deta.Base("usage-db")
 
 ####################################################################################################
 # Data Functions
@@ -108,9 +113,20 @@ hide_streamlit_style = """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
 st.subheader("Scrape posts from r/NUS")
 
-with st.form("scraper"):
 
-    keyword = st.text_input(label="Input the keyword you wish to search for", placeholder="CS1010S")
+selected = "Select:"
+with st.sidebar:
+    mods_searched = db.fetch().items
+    mods_searched.sort(key = lambda x: x['value'], reverse = True)
+    options = ["Select:"] + [x['key'] for x in mods_searched][0:10]
+    selected = st.selectbox(label="Most Searched Keywords", options=options)
+
+
+with st.form("scraper"):
+    if selected != "Select:":
+        keyword = st.text_input(label="Input the keyword you wish to search for", value = selected)
+    else:
+        keyword = st.text_input(label="Input the keyword you wish to search for", placeholder="CS1010S")
     remove_neutrals = st.checkbox(label="Exclude neutrals from result")
 
     # columns for date selectors
@@ -146,6 +162,14 @@ if module:
 data["post"] = data["post"].str[:1500]
 
 res = get_sentiment(nlp, data["post"].tolist())
+
+check = db.get(keyword.upper())
+if check:
+    db.put(check['value']+1, key = keyword.upper())
+else:
+    db.put(1, key = keyword.upper())
+
+db_content = db.fetch().items
 
 counts = count_sentiment(res)
 if remove_neutrals:
