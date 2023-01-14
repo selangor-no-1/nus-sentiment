@@ -9,6 +9,7 @@ from components.post_card import post_card
 import transformers
 from datetime import datetime
 import altair as alt
+import re
 
 st.markdown("<h1>NUS Sentiment</h1>", unsafe_allow_html=True)
 
@@ -72,8 +73,16 @@ cache_args = dict(
 
 @st.cache(ttl=60*60, **cache_args)
 def get_sentiment(nlp, posts):
+    
+    ### The parameters for tokenizer in nlp pipeline:
     tokenizer_kwargs = {'padding':True,'truncation':True,'max_length':512}
-    sentiments = nlp(posts, **tokenizer_kwargs)
+
+    ### Removing module codes from posts, since nlp won't know what they are
+    removeCodes = []
+    for post in posts:
+        removeCodes.append(re.sub("(([A-Za-z]){2,3}\d{4}([A-Za-z]){0,1})", "", post))
+
+    sentiments = nlp(removeCodes, **tokenizer_kwargs)
 
     l = [LABELS[x["label"]] for x in sentiments]
     s = [x["score"] for x in sentiments]
