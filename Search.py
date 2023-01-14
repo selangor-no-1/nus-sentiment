@@ -102,6 +102,19 @@ with st.form("scraper"):
 
 data = scrape(keyword.lower())
 
+
+# Check if is Module
+module = re.search("(([A-Za-z]){2,3}\d{4}([A-Za-z]){0,1})", keyword)
+if module:
+    col1, col2 = st.columns([.5,1])
+    with col1:
+        st.write("MODULE " + module.group(0).upper() + " DETECTED!!!")
+    
+    with col2:
+        st.markdown(f'''<a href={"https://www.nusmods.com/modules/" + module.group(0)}>
+                    <button style="background-color:#EF7C00;">NUSMODS</button></a>''',
+                    unsafe_allow_html=True)
+
 # truncate the post lengths before passing to the NLP pipline. max tokens: 514
 data["post"] = data["post"].str[:1500]
 
