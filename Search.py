@@ -261,7 +261,7 @@ st.info("Push to database - we are collecting this data for our vector database.
 
 # init pinecone session
 pinecone.init(
-    api_key="6bd0fca0-81e9-4bf6-92d8-cbf24b4dac85",
+    api_key= st.secrets["PINECONE_KEY"],
     environment="us-west1-gcp"
 )
 

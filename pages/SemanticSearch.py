@@ -5,7 +5,7 @@ from components.post_card import display_post, paginator
 
 # init pinecone session
 pinecone.init(
-    api_key="6bd0fca0-81e9-4bf6-92d8-cbf24b4dac85",
+    api_key=st.secrets["PINECONE_KEY"],
     environment="us-west1-gcp"
 )
 

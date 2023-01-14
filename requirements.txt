@@ -1,11 +1,9 @@
 altair==4.2.0
 matplotlib==3.6.3
 pandas==1.5.2
-pinecone==0.1.0
-pinecone_client==2.1.0
+pinecone-client==2.1.0
 plotly==5.11.0
 praw==7.6.1
-python-dotenv==0.21.0
 python_dateutil==2.8.2
 sentence_transformers==2.2.2
 stqdm==0.0.5
