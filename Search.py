@@ -6,9 +6,11 @@ import praw
 from utils.reddit import reddit_agent
 from utils.helpers import more_than_two_codes 
 from components.post_card import display_post, paginator
-from components.charts import bar, line_and_scatter, wordcloudchart, wordcloudchart
+from components.charts import bar, line_and_scatter, wordcloudchart
 from utils.model import download_model, LABELS
 from datetime import datetime
+
+st.set_page_config(layout="wide", initial_sidebar_state="collapsed", page_icon="📈")
 
 # instantiate reddit agent
 reddit = reddit_agent()
@@ -38,17 +40,17 @@ def scrape(keyword: str, start_date: datetime, end_date: datetime):
         comments_list = comments.list()
 
         # add the body of the post itself
-        data.append((post.title, post.author, datetime.fromtimestamp(post.created_utc), post.selftext))
+        data.append((post.title, post.author, datetime.fromtimestamp(post.created_utc), post.selftext, post.url))
 
         # BFS
         while len(comments_list) > 0:
             comment = comments_list.pop(0)
             if isValidComment(comment):
-                data.append((post.title, comment.author, datetime.fromtimestamp(comment.created_utc), comment.body))
+                data.append((post.title, comment.author, datetime.fromtimestamp(comment.created_utc), comment.body, post.url))
             elif isinstance(comment, praw.models.MoreComments):
                 comments_list.extend(comment.comments())
     
-    df = pd.DataFrame(data, columns=["thread_title", "author", "created_at", "post"])
+    df = pd.DataFrame(data, columns=["thread_title", "author", "created_at", "post", "url"])
     return df[df["created_at"].between(pd.Timestamp(start_date), pd.Timestamp(end_date))]
 
 
@@ -97,10 +99,18 @@ with st.form("scraper"):
 
     keyword = st.text_input(label="Input the keyword you wish to search for", placeholder="CS1010S")
     remove_neutrals = st.checkbox(label="Exclude neutrals from result")
-    start_date = st.date_input("Start date", datetime.fromisoformat("2015-01-01"))
-    end_date = st.date_input("End date", datetime.now())
+
+    # columns for date selectors
+    filter_date = st.checkbox(label="Filter by date")
+    tc1,tc2 = st.columns(2)
+    with tc1:
+        start_date = st.date_input("Start date", datetime.fromisoformat("2015-01-01"))
+    with tc2:
+        end_date = st.date_input("End date", datetime.now())
+
     if start_date >= end_date:
         st.error("Error: End date must be after start date.")
+
     submitted = st.form_submit_button("Submit")
 
     if not keyword:
@@ -114,11 +124,10 @@ module = re.search("(([A-Za-z]){2,3}\d{4}([A-Za-z]){0,1})", keyword)
 if module:
     col1, col2 = st.columns([.5,1])
     with col1:
-        st.write("MODULE " + module.group(0).upper() + " DETECTED!!!")
-    
+        st.markdown(f"Module **{module.group(0).upper()}** detected!. Head to")
     with col2:
         st.markdown(f'''<a href={"https://www.nusmods.com/modules/" + module.group(0)}>
-                    <button style="background-color:#EF7C00;">NUSMODS</button></a>''',
+                    <img src="https://raw.githubusercontent.com/nusmodifications/nusmods/1160b6f080a734cb51a5cc2878d0a5cb3ebf3b6b/misc/nusmods-logo.svg" alt="nusmods-svg" width="100"/></a>''',
                     unsafe_allow_html=True)
 
 # truncate the post lengths before passing to the NLP pipline. max tokens: 514
@@ -146,18 +155,43 @@ posts = list(data.to_dict(orient="records"))
 
 # display the data in expander
 with st.expander("View posts"):
+    opts_time = ["Old to New", "New to Old"]
+    opts_sent = ["High to Low", "Low to High"]
+    c1,c2 = st.columns(2)
+    with c1:
+        time = st.selectbox(label="Sort by created time", options=opts_time)
+    with c2:
+        sentiment = st.selectbox(label="Sort by sentiment", options=opts_sent)
+
+    if time == opts_time[0]:
+        posts.sort(key=lambda x: x["created_at"], reverse=False)
+    else:
+        posts.sort(key=lambda x: x["created_at"], reverse=True)
+
+    if sentiment == opts_sent[0]:
+        posts.sort(key=lambda x: x["sentiment"], reverse=True)
+    else:
+        posts.sort(key=lambda x: x["sentiment"], reverse=False)
+
     for post in paginator(posts, 5):
         display_post(post)
 
-c1,c2 = st.columns(2)
-with c1:
-    fig = bar(counts=counts)
-    st.plotly_chart(fig, use_container_width=True)
-with c2:
-    line_fig = line_and_scatter(data=data, keyword=keyword)
-    st.altair_chart(line_fig, use_container_width=True)
 
-c3,c4 = st.columns(2)
+fig = bar(counts=counts)
+st.plotly_chart(fig, use_container_width=True)
+
+st.info("Use CTRL + CLICK on the points to open the Reddit thread in a new tab!",icon="ℹ️")
+
+line_fig = line_and_scatter(data=data, keyword=keyword)
+st.altair_chart(line_fig, use_container_width=True)
+
+
+fig = wordcloudchart(data)
+c3,c4,c5 = st.columns(3)
+
 with c3:
-    fig = wordcloudchart(data)
-    st.pyplot(fig)
+    st.pyplot(fig[0])
+with c4:
+    st.pyplot(fig[1])
+with c5:
+    st.pyplot(fig[2])
