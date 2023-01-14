@@ -17,22 +17,24 @@ load_dotenv()
 client_id = os.getenv('ACCESS_TOKEN')
 client_secret = os.getenv('SECRET_KEY')
 username = os.getenv("USERNAME")
-password = os.getenv("PASSWORD")
 user_agent = "dev"
 
 reddit = praw.Reddit(
     client_id = client_id,
     client_secret = client_secret,
     user_agent = user_agent,
-    username = username,
-    password = password
+    username = username
 )
 
 nus_sub = reddit.subreddit("nus")
 
-_, _, nlp  = download_model()
+_, tokenizer, nlp  = download_model()
 
 st.header("Scrape posts from r/NUS")
+
+def isComment(comment):
+    return (not isinstance(comment, praw.models.MoreComments)) and (comment.author != "AutoModerator") and (comment.body != "[deleted]")
+
 
 @st.experimental_memo(ttl=60*60)
 def scrape(keyword: str):
@@ -49,7 +51,10 @@ def scrape(keyword: str):
         while len(comments_list) > 0:
             comment = comments_list.pop(0)
             if not isinstance(comment, praw.models.MoreComments) and comment.author != "AutoModerator":
-                data.append((post.title, comment.author, datetime.fromtimestamp(comment.created_utc), comment.body))
+                if isComment(comment):
+                    data.append((post.title, comment.author, datetime.fromtimestamp(comment.created_utc), comment.body))
+                
+
             elif isinstance(comment, praw.models.MoreComments):
                 comments_list.extend(comment.comments())
         
@@ -67,7 +72,8 @@ cache_args = dict(
 
 @st.cache(ttl=60*60, **cache_args)
 def get_sentiment(nlp, posts):
-    sentiments = nlp(posts)
+    tokenizer_kwargs = {'padding':True,'truncation':True,'max_length':512}
+    sentiments = nlp(posts, **tokenizer_kwargs)
 
     l = [LABELS[x["label"]] for x in sentiments]
     s = [x["score"] for x in sentiments]
@@ -93,10 +99,9 @@ if submitted:
     st.dataframe(data)
     # truncate the post lengths before passing to the NLP pipline. max tokens: 514
     data["post"] = data["post"].str[:1500]
-    try:
-        res= get_sentiment(nlp, data["post"].tolist())
-    except:
-        st.error("Oops! Something went wrong 🚨. Try another keyword!")
+    
+    res= get_sentiment(nlp, data["post"].tolist())
+   
     counts = count_sentiment(res)
     if remove_neutrals:
         del counts["neutral"]

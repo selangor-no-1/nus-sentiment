@@ -22,7 +22,7 @@ def download_model(model_id: str = MODEL_ID):
         model_id,
         num_labels=3 # get positive, neutral, negative labels
     )
-
+    
     tokenizer = AutoTokenizer.from_pretrained(model_id)
 
     nlp = pipeline(
