@@ -3,7 +3,7 @@ from collections import Counter
 
 def find_module_codes(text: str):
     # regex pattern for module codes: ie PC1101, DSA3101
-    module_code_pattern = r1 = r"(([A-Za-z]){2,3}\d{4}([A-Za-z]){0,1})"
+    module_code_pattern = r"(([A-Za-z]){2,3}\d{4}([A-Za-z]){0,1})"
     # find all the instances of module codes
     mentions = [x[0] for x in re.findall(module_code_pattern, text)]
 

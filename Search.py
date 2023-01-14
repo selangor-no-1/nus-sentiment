@@ -62,10 +62,10 @@ cache_args = dict(
 @st.cache(ttl=60*60, **cache_args)
 def get_sentiment(nlp, posts):
     
-    ### The parameters for tokenizer in nlp pipeline:
-    tokenizer_kwargs = {'padding':True,'truncation':True,'max_length':512}
+    # The parameters for tokenizer in nlp pipeline:
+    tokenizer_kwargs = {'padding': True, 'truncation': True, 'max_length': 512}
 
-    ### Removing module codes from posts, since nlp won't know what they are
+    # Removing module codes from posts, since nlp won't know what they are
     removeCodes = []
     for post in posts:
         removeCodes.append(re.sub("(([A-Za-z]){2,3}\d{4}([A-Za-z]){0,1})", "", post))
@@ -78,7 +78,7 @@ def get_sentiment(nlp, posts):
     return list(zip(l,s))
 
 def count_sentiment(result):
-    sentiments = {"negative":0, "neutral":0, "positive":0}
+    sentiments = {"negative": 0, "neutral": 0, "positive": 0}
     for sentiment, _ in result:
         sentiments[sentiment] += 1
     return sentiments
@@ -98,27 +98,26 @@ with st.form("scraper"):
 
 if submitted:
     # search
-    data = scrape(keyword)
+    data = scrape(keyword.lower())
     # display the data
     st.dataframe(data)
     # truncate the post lengths before passing to the NLP pipline. max tokens: 514
     data["post"] = data["post"].str[:1500]
     
-    res= get_sentiment(nlp, data["post"].tolist())
+    res = get_sentiment(nlp, data["post"].tolist())
    
     counts = count_sentiment(res)
     if remove_neutrals:
         del counts["neutral"]
 
-    def get_nnp(res):
-        nnp=[]
-        for (l,s) in res:
-            if l == "positive": nnp.append(s)
-            elif l == "negative": nnp.append(s*-1)
-            else: nnp.append(0)
-        return nnp
-
-    nnp = get_nnp(res)
+    nnp = []
+    for l, s in res:
+        if l == "positive":
+            nnp.append(s)
+        elif l == "negative":
+            nnp.append(-s)
+        else:
+            nnp.append(0)
 
     data["sentiment"] = nnp
 
@@ -131,6 +130,3 @@ if submitted:
     with c2:
         line_fig = line_and_scatter(data=data, keyword=keyword)
         st.altair_chart(line_fig, use_container_width=True)
-
-
-

@@ -3,7 +3,7 @@ from utils.model import download_model, LABELS
 
 model, tokenizer, nlp = download_model()
 
-text = st.text_input(label="Input the text u want to analyse")
+text = st.text_input(label="Input the text you want to analyse")
 st.write(f"You inputted: \n {text}")
 
 out = nlp(text)
