@@ -92,7 +92,6 @@ def count_sentiment(result):
 # Begin UI
 ####################################################################################################
 
-# st.markdown("<h1>NUS Sentiment</h1>", unsafe_allow_html=True)
 hide_streamlit_style = """
             <style>
             code, h1 {color: #ff5138;}
@@ -189,7 +188,25 @@ with st.expander("View posts"):
 
 
 fig = bar(counts=counts)
-st.plotly_chart(fig, use_container_width=True)
+c1,c2 = st.columns(2)
+
+with c1:
+
+    st.markdown('')
+    st.markdown('')
+    st.markdown("**Summary Statistics:**")
+    st.markdown(':green[Positive Posts:] ' + str(counts['positive']))
+    st.markdown('Neutrual Posts: ' + str(counts['neutral']))
+    st.markdown(':red[Negative Posts:] ' + str(counts['negative']))
+    st.markdown("Total Posts: " + str(counts['positive'] + counts['negative'] + counts['neutral']))
+    sentiment_float = data['sentiment'].mean()
+    st.markdown("Average Sentiment: " + str(float(f'{sentiment_float:.3f}')))
+    
+    
+with c2:
+
+    st.plotly_chart(fig, use_container_width=True)
+
 
 st.info("Use CTRL + CLICK on the points to open the Reddit thread in a new tab!",icon="ℹ️")
 
