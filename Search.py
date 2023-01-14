@@ -5,9 +5,11 @@ import re
 import praw
 from utils.reddit import reddit_agent
 from utils.helpers import more_than_two_codes 
-from components.charts import bar, line_and_scatter
+from components.charts import bar, line_and_scatter, wordcloudchart
 from utils.model import download_model, LABELS
 from datetime import datetime
+
+st.markdown("<h1>NUS Sentiment</h1>", unsafe_allow_html=True)
 
 # instantiate reddit agent
 reddit = reddit_agent()
@@ -130,3 +132,9 @@ if submitted:
     with c2:
         line_fig = line_and_scatter(data=data, keyword=keyword)
         st.altair_chart(line_fig, use_container_width=True)
+    
+    c3,c4 = st.columns(2)
+    with c3:
+        fig = wordcloudchart(data)
+        st.pyplot(fig)
+
