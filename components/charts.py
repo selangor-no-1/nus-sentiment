@@ -22,8 +22,14 @@ def bar(counts: dict):
     
     return fig
 
+def pie(source: pd.DataFrame):
+    return alt.Chart(source, title = "Distribution").mark_arc().encode(
+        theta=alt.Theta(field="value", type="quantitative"),
+        color=alt.Color(field="name", type="nominal")
+    )
+
 def line_and_scatter(data: pd.DataFrame, keyword: str):
-    chart = alt.Chart(data, title=f"Sentiment over time for {keyword}")
+    chart = alt.Chart(data, title=f"Sentiment over time for:  {keyword}")
 
     line = chart.mark_line(tooltip=True).encode(
         x=alt.X("created_at:T", timeUnit="yearmonthdate", title="time"),

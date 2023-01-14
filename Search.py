@@ -113,7 +113,7 @@ hide_streamlit_style = """
             <h1>NUS Sentiment</h1>
             """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
-st.subheader("Scrape posts from r/NUS")
+st.markdown("### Scrape posts from [`r/NUS`](https://www.reddit.com/r/nus)")
 
 
 selected = "Select:"
