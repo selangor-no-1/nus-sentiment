@@ -5,8 +5,8 @@ import re
 import praw
 from utils.reddit import reddit_agent
 from utils.helpers import more_than_two_codes 
-from components.post_card import display_all_posts
-from components.charts import bar, line_and_scatter, wordcloudchart
+from components.post_card import display_post, paginator
+from components.charts import bar, line_and_scatter, wordcloudchart, wordcloudchart
 from utils.model import download_model, LABELS
 from datetime import datetime
 
@@ -97,60 +97,49 @@ with st.form("scraper"):
     remove_neutrals = st.checkbox(label="Exclude neutrals from result")
     submitted = st.form_submit_button("Submit")
 
-if submitted:
-    # search
-    data = scrape(keyword.lower())
+    if not keyword:
+        st.stop()
 
-    # Check if is Module
-    module = re.search("(([A-Za-z]){2,3}\d{4}([A-Za-z]){0,1})", keyword)
-    if module:
-        col1, col2 = st.columns([.5,1])
-        with col1:
-            st.write("MODULE " + module.group(0).upper() + " DETECTED!!!")
-        
-        with col2:
-            st.markdown(f'''<a href={"https://www.nusmods.com/modules/" + module.group(0)}>
-                        <button style="background-color:#EF7C00;">NUSMODS</button></a>''',
-                        unsafe_allow_html=True)
+data = scrape(keyword.lower())
 
+# truncate the post lengths before passing to the NLP pipline. max tokens: 514
+data["post"] = data["post"].str[:1500]
 
-    # truncate the post lengths before passing to the NLP pipline. max tokens: 514
-    data["post"] = data["post"].str[:1500]
-    
-    res = get_sentiment(nlp, data["post"].tolist())
-   
-    counts = count_sentiment(res)
-    if remove_neutrals:
-        del counts["neutral"]
+res = get_sentiment(nlp, data["post"].tolist())
 
-    nnp = []
-    for l, s in res:
-        if l == "positive":
-            nnp.append(s)
-        elif l == "negative":
-            nnp.append(-s)
-        else:
-            nnp.append(0)
+counts = count_sentiment(res)
+if remove_neutrals:
+    del counts["neutral"]
 
-    # append scores to the dataframe
-    data["sentiment"] = nnp
+nnp = []
+for l, s in res:
+    if l == "positive":
+        nnp.append(s)
+    elif l == "negative":
+        nnp.append(-s)
+    else:
+        nnp.append(0)
 
-    # display the data
-    # st.dataframe(data) uncomment this time for debugging
-    
-    with st.expander("View posts"):
-        display_all_posts(data)
+# append scores to the dataframe
+data["sentiment"] = nnp
 
-    c1,c2 = st.columns(2)
-    with c1:
-        fig = bar(counts=counts)
-        st.plotly_chart(fig, use_container_width=True)
-    with c2:
-        line_fig = line_and_scatter(data=data, keyword=keyword)
-        st.altair_chart(line_fig, use_container_width=True)
-    
-    c3,c4 = st.columns(2)
-    with c3:
-        fig = wordcloudchart(data)
-        st.pyplot(fig)
+posts = list(data.to_dict(orient="records"))
+
+# display the data in expander
+with st.expander("View posts"):
+    for post in paginator(posts, 5):
+        display_post(post)
+
+c1,c2 = st.columns(2)
+with c1:
+    fig = bar(counts=counts)
+    st.plotly_chart(fig, use_container_width=True)
+with c2:
+    line_fig = line_and_scatter(data=data, keyword=keyword)
+    st.altair_chart(line_fig, use_container_width=True)
+
+c3,c4 = st.columns(2)
+with c3:
+    fig = wordcloudchart(data)
+    st.pyplot(fig)
 
