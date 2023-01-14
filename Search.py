@@ -92,19 +92,7 @@ def count_sentiment(result):
 # Begin UI
 ####################################################################################################
 
-# st.markdown("<h1>NUS Sentiment</h1>", unsafe_allow_html=True)
-hide_streamlit_style = """
-            <style>
-            code, h1 {color: #ff5138;}
-            h3, p {color: #fff;}
-            footer {visibility: hidden;}
-            input {color: #fff !important;}
-            button:hover {background-color: #ff5138;}
-            button:focus {box-shadow: #ff5138;}
-            </style>
-            <h1>NUS Sentiment</h1>
-            """
-st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
+st.markdown("<h1>NUS Sentiment</h1>", unsafe_allow_html=True)
 st.subheader("Scrape posts from r/NUS")
 
 with st.form("scraper"):
@@ -113,7 +101,8 @@ with st.form("scraper"):
     remove_neutrals = st.checkbox(label="Exclude neutrals from result")
 
     # columns for date selectors
-    tc1, tc2 = st.columns(2)
+    filter_date = st.checkbox(label="Filter by date")
+    tc1,tc2 = st.columns(2)
     with tc1:
         start_date = st.date_input("Start date", datetime.fromisoformat("2015-01-01"))
     with tc2:
@@ -160,7 +149,7 @@ for l, s in res:
         nnp.append(0)
 
 # append scores to the dataframe
-data.insert(loc=1, column="sentiment", value=nnp)
+data["sentiment"] = nnp
 
 posts = list(data.to_dict(orient="records"))
 
@@ -189,7 +178,25 @@ with st.expander("View posts"):
 
 
 fig = bar(counts=counts)
-st.plotly_chart(fig, use_container_width=True)
+c1,c2 = st.columns(2)
+
+with c1:
+
+    st.markdown('')
+    st.markdown('')
+    st.markdown("**Summary Statistics:**")
+    st.markdown(':green[Positive Posts:] ' + str(counts['positive']))
+    st.markdown('Neutrual Posts: ' + str(counts['neutral']))
+    st.markdown(':red[Negative Posts:] ' + str(counts['negative']))
+    st.markdown("Total Posts: " + str(counts['positive'] + counts['negative'] + counts['neutral']))
+    sentiment_float = data['sentiment'].mean()
+    st.markdown("Average Sentiment: " + str(float(f'{sentiment_float:.3f}')))
+    
+    
+with c2:
+
+    st.plotly_chart(fig, use_container_width=True)
+
 
 st.info("Use CTRL + CLICK on the points to open the Reddit thread in a new tab!",icon="ℹ️")
 

@@ -64,29 +64,24 @@ def wordcloudchart(data: pd.DataFrame):
         stopwords = set(STOPWORDS)
 
     stopwords.update(['a', 'b', 'c', 'u', 'C', 'want', 'know', 'take', 'think', 's', 'took', 'one', 'will', 'prof', 'lot', 'much', 'need', 'Thank', 'mod', 't', 'still', 'even', 'really'])
-    fig1, ax = plt.subplots(figsize=(15,5))
-    wc = WordCloud(stopwords = stopwords, background_color = "white", max_words = 20)
-    wc.generate(pos_word_list)
-    plt.imshow(wc.recolor(color_func=grey_color_func, random_state=3), interpolation='bilinear')
-    plt.axis("off")
-    plt.title('Positive Sentiment',fontdict = {'fontsize' : 30})
-    plt.show()
-
-    fig2, ax = plt.subplots(figsize=(15,5))
-    wc = WordCloud(stopwords = stopwords, background_color = "white", max_words = 20)
-    wc.generate(neu_word_list)
-    plt.imshow(wc.recolor(color_func=grey_color_func, random_state=3), interpolation='bilinear')
-    plt.axis("off")
-    plt.title('Neutral Sentiment',fontdict = {'fontsize' : 30})
-    plt.show()
-
-    fig3, ax = plt.subplots(figsize=(15,5))
-    wc = WordCloud(stopwords = stopwords, background_color = "white", max_words = 20)
-    wc.generate(neg_word_list)
-    plt.imshow(wc.recolor(color_func=grey_color_func, random_state=3), interpolation='bilinear')
-    plt.axis("off")
-    plt.title('Negative Sentiment',fontdict = {'fontsize' : 30})
-    plt.show()
-    return fig1, fig2, fig3
+    
+    lst_title_words = [[pos_word_list,'Positive Sentiment'], [neu_word_list, 'Neutral Sentiment'], [neg_word_list, 'Negative Sentiment']]
+    figures = []
+    count = 0
+    for i in lst_title_words:
+        fig, ax = plt.subplots(figsize=(15,5))
+        ax.set_facecolor('black')
+        wc = WordCloud(stopwords = stopwords, background_color = "black", max_words = 20)
+        wc.generate(i[0])
+        plt.imshow(wc.recolor(color_func=grey_color_func, random_state=3), interpolation='bilinear')
+        plt.axis("off")
+        plt.title(i[1],fontdict = {'fontsize' : 30,
+            'color':  'white'})
+        plt.rcParams['axes.facecolor']='black'
+        plt.rcParams['savefig.facecolor']='black'
+        plt.show()
+        figures.append(fig)
+        count+=1
+    return figures
 
 
