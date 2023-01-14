@@ -1,13 +1,29 @@
-import streamlit as st
+import altair as alt
+import os
 import pandas as pd
-import transformers
-import re
+import plotly.express as px
 import praw
-from utils.reddit import reddit_agent
-from utils.helpers import more_than_two_codes 
-from components.charts import bar, line_and_scatter
-from utils.model import download_model, LABELS
+import re
+import streamlit as st
+import transformers
+
+from components.post_card import post_card
 from datetime import datetime
+from dotenv import load_dotenv
+from typing import Optional
+
+from components.charts import bar, line_and_scatter
+from utils.helpers import more_than_two_codes 
+from utils.model import download_model, LABELS
+from utils.reddit import reddit_agent
+
+st.markdown("<h1>NUS Sentiment</h1>", unsafe_allow_html=True)
+
+load_dotenv()
+
+client_id = os.getenv('ACCESS_TOKEN')
+client_secret = os.getenv('SECRET_KEY')
+user_agent = "dev"
 
 # instantiate reddit agent
 reddit = reddit_agent()
@@ -27,26 +43,33 @@ def isValidComment(comment):
         and (comment.body != "[deleted]") \
         and (not more_than_two_codes(comment.body))
 
-
 @st.experimental_memo(ttl=60*60)
-def scrape(keyword: str):
+def scrape(keyword: str, start: Optional[datetime]=datetime.min, end: Optional[datetime]=datetime.now(),
+        max_posts: Optional[int]=10):
     data = []
+    posts = nus_sub.search(keyword)
+    searched_num = 0
+    for post in posts:
+        created = datetime.fromtimestamp(post.created)
+        if start <= created <= end:
+            comments = post.comments
+            comments_list = comments.list()
 
-    for post in nus_sub.search(keyword):
-        comments = post.comments
-        comments_list = comments.list()
+            # add the body of the post itself
+            data.append((post.title, post.author, datetime.fromtimestamp(post.created_utc), post.selftext))
 
-        # add the body of the post itself
-        data.append((post.title, post.author, datetime.fromtimestamp(post.created_utc), post.selftext))
-
-        # BFS
-        while len(comments_list) > 0:
-            comment = comments_list.pop(0)
-            if isValidComment(comment):
-                data.append((post.title, comment.author, datetime.fromtimestamp(comment.created_utc), comment.body))
-            elif isinstance(comment, praw.models.MoreComments):
-                comments_list.extend(comment.comments())
+            # BFS
+            while len(comments_list) > 0:
+                comment = comments_list.pop(0)
+                if isValidComment(comment):
+                    data.append((post.title, comment.author, datetime.fromtimestamp(comment.created_utc), comment.body))
+                elif isinstance(comment, praw.models.MoreComments):
+                    comments_list.extend(comment.comments())
         
+        searched_num += 1
+        if searched_num == max_posts:
+            break
+
     return pd.DataFrame(data, columns=["thread_title", "author", "created_at","post"])
 
 cache_args = dict(
@@ -78,7 +101,7 @@ def get_sentiment(nlp, posts):
     return list(zip(l,s))
 
 def count_sentiment(result):
-    sentiments = {"negative":0, "neutral":0, "positive":0}
+    sentiments = {"negative": 0, "neutral": 0, "positive": 0}
     for sentiment, _ in result:
         sentiments[sentiment] += 1
     return sentiments
@@ -101,36 +124,36 @@ if submitted:
     data = scrape(keyword)
     # display the data
     st.dataframe(data)
-    # truncate the post lengths before passing to the NLP pipline. max tokens: 514
+    # truncate the post lengths before passing to the NLP pipeline. max tokens: 514
     data["post"] = data["post"].str[:1500]
-    
-    res= get_sentiment(nlp, data["post"].tolist())
-   
+    try:
+        res = get_sentiment(nlp, data["post"].tolist())
+    except:
+        st.error("Oops! Something went wrong 🚨. Try another keyword!")
     counts = count_sentiment(res)
     if remove_neutrals:
         del counts["neutral"]
 
-    def get_nnp(res):
-        nnp=[]
-        for (l,s) in res:
-            if l == "positive": nnp.append(s)
-            elif l == "negative": nnp.append(s*-1)
-            else: nnp.append(0)
-        return nnp
+    # display barplot
+    fig = px.bar(x=list(counts.keys()), y=list(counts.values()), color=list(counts.keys()))
 
-    nnp = get_nnp(res)
+    nnp = []
+    for l, s in res:
+        if l == "positive":
+            nnp.append(s)
+        elif l == "negative":
+            nnp.append(-s)
+        else:
+            nnp.append(0)
 
     data["sentiment"] = nnp
 
     # append scores to the dataframe
 
-    c1,c2 = st.columns(2)
+    c1, c2 = st.columns(2)
     with c1:
         fig = bar(counts=counts)
         st.plotly_chart(fig, use_container_width=True)
     with c2:
         line_fig = line_and_scatter(data=data, keyword=keyword)
         st.altair_chart(line_fig, use_container_width=True)
-
-
-
