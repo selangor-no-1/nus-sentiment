@@ -1,0 +1,4 @@
+*.ipynb
+todo.txt
+__pycache__
+.env
