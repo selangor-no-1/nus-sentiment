@@ -61,7 +61,7 @@ def wordcloudchart(data: pd.DataFrame):
             neg_word_list+=(word+ ' ')
         else:
             neu_word_list+=(word + ' ')
-        stopwords = set(STOPWORDS)
+    stopwords = set(STOPWORDS)
 
     stopwords.update(['a', 'b', 'c', 'u', 'C', 'want', 'know', 'take', 'think', 's', 'took', 'one', 'will', 'prof', 'lot', 'much', 'need', 'Thank', 'mod', 't', 'still', 'even', 'really'])
     

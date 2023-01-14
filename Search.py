@@ -191,17 +191,17 @@ fig = bar(counts=counts)
 c1,c2 = st.columns(2)
 
 with c1:
-
     st.markdown('')
     st.markdown('')
     st.markdown("**Summary Statistics:**")
-    st.markdown(':green[Positive Posts:] ' + str(counts['positive']))
-    st.markdown('Neutrual Posts: ' + str(counts['neutral']))
-    st.markdown(':red[Negative Posts:] ' + str(counts['negative']))
+    st.markdown(':green[Positive Posts😊:] ' + str(counts['positive']))
+    st.markdown('Neutrual Posts😐: ' + str(counts['neutral']))
+    st.markdown(':red[Negative Posts😔:] ' + str(counts['negative']))
     st.markdown("Total Posts: " + str(counts['positive'] + counts['negative'] + counts['neutral']))
     sentiment_float = data['sentiment'].mean()
     st.markdown("Average Sentiment: " + str(float(f'{sentiment_float:.3f}')))
-    
+    st.markdown("First Post: " + str(data['created_at'].min()))
+    st.markdown("Last Post: " + str(data['created_at'].max()))
     
 with c2:
 
