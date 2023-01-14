@@ -1,36 +1,24 @@
 import streamlit as st
-import praw
-import os
-from dotenv import load_dotenv
 import pandas as pd
-from utils.model import download_model, LABELS
 import transformers
-from datetime import datetime
 import re
+import praw
+from utils.reddit import reddit_agent
 from utils.helpers import more_than_two_codes 
 from components.charts import bar, line_and_scatter
+from utils.model import download_model, LABELS
+from datetime import datetime
 
-st.markdown("<h1>NUS Sentiment</h1>", unsafe_allow_html=True)
-
-load_dotenv()
-
-client_id = os.getenv('ACCESS_TOKEN')
-client_secret = os.getenv('SECRET_KEY')
-username = os.getenv("USERNAME")
-user_agent = "dev"
-
-reddit = praw.Reddit(
-    client_id = client_id,
-    client_secret = client_secret,
-    user_agent = user_agent,
-    username = username
-)
-
+# instantiate reddit agent
+reddit = reddit_agent()
 nus_sub = reddit.subreddit("nus")
 
+# instatntiate model
 _, tokenizer, nlp  = download_model()
 
-st.header("Scrape posts from r/NUS")
+####################################################################################################
+# Data Functions
+####################################################################################################
 
 # collection of bools to check whether we want to include a post or not
 def isValidComment(comment):
@@ -94,6 +82,13 @@ def count_sentiment(result):
     for sentiment, _ in result:
         sentiments[sentiment] += 1
     return sentiments
+
+####################################################################################################
+# Begin UI
+####################################################################################################
+
+st.markdown("<h1>NUS Sentiment</h1>", unsafe_allow_html=True)
+st.subheader("Scrape posts from r/NUS")
 
 with st.form("scraper"):
 
