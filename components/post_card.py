@@ -1,21 +1,15 @@
-from typing import List
+import streamlit as st
+import pandas as pd
 
-def post_card(
-    title: str,
-    posts: List[str]
-):
+def display_post(dict: dict):
+    for k,v in dict.items():
+        a, b = st.columns([1,4])
+        a.write(f"**{k}**")
+        b.write(v)
 
-    p_template = lambda post: f"""
-    <p class="card-text">{post}</p>
-    """
+def display_all_posts(data: pd.DataFrame):
+    data_to_dict = data.to_dict(orient="records")
+    for post in data_to_dict:
+        display_post(post)
+        st.markdown("---")
 
-    all_posts_content = [p_template(post) for post in posts]
-
-    return f"""
-    <div class="card text-center">
-        <div class="card-body">
-            <h5 class="card-title mb-1 font-weight-bold">{title}</h5>
-            <p class="card-text">{all_posts_content}</p>
-        </div>
-    </div>
-    """

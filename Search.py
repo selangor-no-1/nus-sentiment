@@ -5,11 +5,10 @@ import re
 import praw
 from utils.reddit import reddit_agent
 from utils.helpers import more_than_two_codes 
-from components.charts import bar, line_and_scatter, wordcloudchart
+from components.post_card import display_all_posts
+from components.charts import bar, line_and_scatter
 from utils.model import download_model, LABELS
 from datetime import datetime
-
-st.markdown("<h1>NUS Sentiment</h1>", unsafe_allow_html=True)
 
 # instantiate reddit agent
 reddit = reddit_agent()
@@ -101,8 +100,7 @@ with st.form("scraper"):
 if submitted:
     # search
     data = scrape(keyword.lower())
-    # display the data
-    st.dataframe(data)
+
     # truncate the post lengths before passing to the NLP pipline. max tokens: 514
     data["post"] = data["post"].str[:1500]
     
@@ -121,9 +119,14 @@ if submitted:
         else:
             nnp.append(0)
 
+    # append scores to the dataframe
     data["sentiment"] = nnp
 
-    # append scores to the dataframe
+    # display the data
+    # st.dataframe(data) uncomment this time for debugging
+    
+    with st.expander("View posts"):
+        display_all_posts(data)
 
     c1,c2 = st.columns(2)
     with c1:
