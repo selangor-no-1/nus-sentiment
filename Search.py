@@ -30,7 +30,7 @@ def isValidComment(comment):
 
 
 @st.experimental_memo(ttl=60*60)
-def scrape(keyword: str):
+def scrape(keyword: str, start_date: datetime, end_date: datetime):
     data = []
 
     for post in nus_sub.search(keyword):
@@ -47,8 +47,10 @@ def scrape(keyword: str):
                 data.append((post.title, comment.author, datetime.fromtimestamp(comment.created_utc), comment.body))
             elif isinstance(comment, praw.models.MoreComments):
                 comments_list.extend(comment.comments())
-        
-    return pd.DataFrame(data, columns=["thread_title", "author", "created_at","post"])
+    
+    df = pd.DataFrame(data, columns=["thread_title", "author", "created_at", "post"])
+    return df[df["created_at"].between(pd.Timestamp(start_date), pd.Timestamp(end_date))]
+
 
 cache_args = dict(
     show_spinner = True,
@@ -64,9 +66,9 @@ cache_args = dict(
 def get_sentiment(nlp, posts):
     
     # The parameters for tokenizer in nlp pipeline:
-    tokenizer_kwargs = {'padding': True, 'truncation': True, 'max_length': 512}
+    tokenizer_kwargs = {"padding": True, "truncation": True, "max_length": 512}
 
-    # Removing module codes from posts, since nlp won't know what they are
+    # Removing module codes from posts, since nlp won"t know what they are
     removeCodes = []
     for post in posts:
         removeCodes.append(re.sub("(([A-Za-z]){2,3}\d{4}([A-Za-z]){0,1})", "", post))
@@ -95,12 +97,16 @@ with st.form("scraper"):
 
     keyword = st.text_input(label="Input the keyword you wish to search for", placeholder="CS1010S")
     remove_neutrals = st.checkbox(label="Exclude neutrals from result")
+    start_date = st.date_input("Start date", datetime.fromisoformat("2015-01-01"))
+    end_date = st.date_input("End date", datetime.now())
+    if start_date >= end_date:
+        st.error("Error: End date must be after start date.")
     submitted = st.form_submit_button("Submit")
 
     if not keyword:
         st.stop()
 
-data = scrape(keyword.lower())
+data = scrape(keyword.lower(), start_date, end_date)
 
 # truncate the post lengths before passing to the NLP pipline. max tokens: 514
 data["post"] = data["post"].str[:1500]
@@ -142,4 +148,3 @@ c3,c4 = st.columns(2)
 with c3:
     fig = wordcloudchart(data)
     st.pyplot(fig)
-
