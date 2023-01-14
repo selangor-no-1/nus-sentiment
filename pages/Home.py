@@ -1,5 +1,6 @@
 import streamlit as st
-from utils.model import download_model, LABELS
+
+from utils.model import LABELS, download_model
 
 model, tokenizer, nlp = download_model()
 

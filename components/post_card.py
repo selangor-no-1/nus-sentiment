@@ -1,5 +1,6 @@
 import streamlit as st
 
+
 def display_post(dict: dict):
     for k, v in dict.items():
         a, b = st.columns([1,4])

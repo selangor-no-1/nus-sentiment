@@ -1,10 +1,7 @@
 import streamlit as st
 import torch
-from transformers import (
-    pipeline,
-    AutoTokenizer,
-    AutoModelForSequenceClassification
-)
+from transformers import (AutoModelForSequenceClassification, AutoTokenizer,
+                          pipeline)
 
 MODEL_ID = "cardiffnlp/twitter-roberta-base-sentiment"
 

@@ -1,17 +1,19 @@
-import streamlit as st
-import pandas as pd
-import transformers
 import re
-import praw
-from deta import Deta
-from utils.reddit import reddit_agent
-from utils.helpers import more_than_two_codes 
-from components.post_card import display_post, paginator
-from components.charts import bar, line_and_scatter, wordcloudchart
-from utils.model import download_model, LABELS
 from datetime import datetime
-from stqdm import stqdm
+
+import pandas as pd
 import pinecone
+import praw
+import streamlit as st
+import transformers
+from deta import Deta
+from stqdm import stqdm
+
+from components.charts import bar, line_and_scatter, wordcloud_chart
+from components.post_card import display_post, paginator
+from utils.helpers import more_than_two_codes
+from utils.model import LABELS, download_model
+from utils.reddit import reddit_agent
 from utils.semantics import download_sentence_embedder
 
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed", page_icon="📈")
@@ -119,15 +121,15 @@ with st.sidebar:
     mods_searched = db.fetch().items
     mods_searched.sort(key = lambda x: x['value'], reverse = True)
     options = ["Select:"] + [x['key'] for x in mods_searched][0:10]
-    selected = st.selectbox(label="Most Searched Keywords", options=options)
+    selected = st.selectbox(label="Most searched keywords", options=options)
 
 
 with st.form("scraper"):
     if selected != "Select:":
-        keyword = st.text_input(label="Input the keyword you wish to search for", value = selected)
+        keyword = st.text_input(label="Input the keyword(s) you wish to search for", value = selected)
     else:
-        keyword = st.text_input(label="Input the keyword you wish to search for", placeholder="CS1010S")
-    remove_neutrals = st.checkbox(label="Exclude neutrals from result")
+        keyword = st.text_input(label="Input the keyword(s) you wish to search for", placeholder="CS1010S")
+    remove_neutrals = st.checkbox(label="Exclude neutral results")
 
     # columns for date selectors
     tc1, tc2 = st.columns(2)
@@ -152,7 +154,7 @@ module = re.search("(([A-Za-z]){2,3}\d{4}([A-Za-z]){0,1})", keyword)
 if module:
     col1, col2 = st.columns([.5,1])
     with col1:
-        st.markdown(f"Module **{module.group(0).upper()}** detected!. Head to")
+        st.markdown(f"Module **{module.group(0).upper()}** detected! Head to")
     with col2:
         st.markdown(f'''<a href={"https://www.nusmods.com/modules/" + module.group(0)}>
                     <img src="https://raw.githubusercontent.com/nusmodifications/nusmods/1160b6f080a734cb51a5cc2878d0a5cb3ebf3b6b/misc/nusmods-logo.svg" alt="nusmods-svg" width="100"/></a>''',
@@ -195,7 +197,7 @@ with st.expander("View posts"):
     opts_sent = ["High to Low", "Low to High"]
     c1,c2 = st.columns(2)
     with c1:
-        time = st.selectbox(label="Sort by created time", options=opts_time)
+        time = st.selectbox(label="Sort by time created", options=opts_time)
     with c2:
         sentiment = st.selectbox(label="Sort by sentiment", options=opts_sent)
 
@@ -214,21 +216,21 @@ with st.expander("View posts"):
 
 
 fig = bar(counts=counts)
-c1,c2 = st.columns(2)
+c1, c2 = st.columns(2)
 
 with c1:
     st.markdown('')
     st.markdown('')
-    st.markdown("**Summary Statistics:**")
-    st.markdown(':green[Positive Posts😊:] ' + str(counts['positive']))
-    st.markdown('Neutrual Posts😐: ' + str(counts['neutral']))
-    st.markdown(':red[Negative Posts😔:] ' + str(counts['negative']))
-    st.markdown("Total Posts: " + str(counts['positive'] + counts['negative'] + counts['neutral']))
+    st.markdown("**Summary statistics:**")
+    st.markdown(':green[Positive posts 😊:] ' + str(counts['positive']))
+    st.markdown('Neutral posts 😐: ' + str(counts['neutral']))
+    st.markdown(':red[Negative posts 😔:] ' + str(counts['negative']))
+    st.markdown("Total posts: " + str(counts['positive'] + counts['negative'] + counts['neutral']))
     sentiment_float = data['sentiment'].mean()
-    st.markdown("Average Sentiment: " + str(float(f'{sentiment_float:.3f}')))
-    st.markdown("First Post: " + str(data['created_at'].min()))
-    st.markdown("Last Post: " + str(data['created_at'].max()))
-    
+    st.markdown("Average sentiment: " + str(float(f'{sentiment_float:.3f}')))
+    st.markdown("First post: " + str(data['created_at'].min()))
+    st.markdown("Last post: " + str(data['created_at'].max()))
+
 with c2:
 
     st.plotly_chart(fig, use_container_width=True)
@@ -240,8 +242,8 @@ line_fig = line_and_scatter(data=data, keyword=keyword)
 st.altair_chart(line_fig, use_container_width=True)
 
 try:
-    fig = wordcloudchart(data)
-    c3,c4,c5 = st.columns(3)
+    fig = wordcloud_chart(data)
+    c3, c4, c5 = st.columns(3)
 
     with c3:
         st.pyplot(fig[0])
@@ -250,7 +252,7 @@ try:
     with c5:
         st.pyplot(fig[2])
 except:
-    st.error("Oops! Not enough words to make WorldCloud!")
+    st.error("Oops! Not enough words to make WordCloud!")
 
 ###############################################################################################
 ### Push to Vector DB
