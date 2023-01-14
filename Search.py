@@ -102,16 +102,17 @@ def count_sentiment(result):
 ####################################################################################################
 
 hide_streamlit_style = """
-            <style>
-            code, h1 {color: #ff5138;}
-            h3, p {color: #fff;}
-            footer {visibility: hidden;}
-            input {color: #fff !important;}
-            button:hover {background-color: #ff5138;}
-            button:focus {box-shadow: #ff5138;}
-            </style>
-            <h1>NUS Sentiment</h1>
-            """
+        <style>
+        #MainMenu {visibility: hidden;}
+        code, h1 {color: #ff5138;}
+        h3, p {color: #fff;}
+        footer {visibility: hidden;}
+        input {color: #fff !important;}
+        button:hover {background-color: #ff5138;}
+        button:focus {box-shadow: #ff5138;}
+        </style>
+        <h1>Semantic Search</h1>
+        """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
 st.markdown("### Scrape posts from [`r/NUS`](https://www.reddit.com/r/nus)")
 
