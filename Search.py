@@ -4,12 +4,11 @@ import os
 from dotenv import load_dotenv
 import pandas as pd
 from utils.model import download_model, LABELS
-import plotly.express as px
-from components.post_card import post_card
 import transformers
 from datetime import datetime
-import altair as alt
 import re
+from utils.helpers import more_than_two_codes 
+from components.charts import bar, line_and_scatter
 
 st.markdown("<h1>NUS Sentiment</h1>", unsafe_allow_html=True)
 
@@ -33,8 +32,12 @@ _, tokenizer, nlp  = download_model()
 
 st.header("Scrape posts from r/NUS")
 
-def isComment(comment):
-    return (not isinstance(comment, praw.models.MoreComments)) and (comment.author != "AutoModerator") and (comment.body != "[deleted]")
+# collection of bools to check whether we want to include a post or not
+def isValidComment(comment):
+    return (not isinstance(comment, praw.models.MoreComments)) \
+        and (comment.author != "AutoModerator") \
+        and (comment.body != "[deleted]") \
+        and (not more_than_two_codes(comment.body))
 
 
 @st.experimental_memo(ttl=60*60)
@@ -51,11 +54,8 @@ def scrape(keyword: str):
         # BFS
         while len(comments_list) > 0:
             comment = comments_list.pop(0)
-            if not isinstance(comment, praw.models.MoreComments) and comment.author != "AutoModerator":
-                if isComment(comment):
-                    data.append((post.title, comment.author, datetime.fromtimestamp(comment.created_utc), comment.body))
-                
-
+            if isValidComment(comment):
+                data.append((post.title, comment.author, datetime.fromtimestamp(comment.created_utc), comment.body))
             elif isinstance(comment, praw.models.MoreComments):
                 comments_list.extend(comment.comments())
         
@@ -115,9 +115,6 @@ if submitted:
     if remove_neutrals:
         del counts["neutral"]
 
-    # display barplot
-    fig = px.bar(x=list(counts.keys()), y=list(counts.values()), color=list(counts.keys()))
-
     def get_nnp(res):
         nnp=[]
         for (l,s) in res:
@@ -134,25 +131,11 @@ if submitted:
 
     c1,c2 = st.columns(2)
     with c1:
+        fig = bar(counts=counts)
         st.plotly_chart(fig, use_container_width=True)
     with c2:
-        chart = alt.Chart(data, title=f"Sentiment Over Time for {keyword}")
-
-        line = chart.mark_line(tooltip=True).encode(
-            x=alt.X("created_at:T", timeUnit="yearmonthdate", title="time"),
-            y=alt.Y(
-                "mean(sentiment):Q", title="sentiment", scale=alt.Scale(domain=[-1,1])
-            ),
-            color=alt.Color(value="#FF4B4B")
-        )
-
-        scatter = chart.mark_point(size=75, filled=True).encode(
-            x=alt.X("created_at:T", timeUnit="yearmonthdate", title="time"),
-            y=alt.Y("sentiment:Q", title="sentiment"),
-            tooltip=alt.Tooltip(["created_at", "sentiment", "post"])
-        )
-
-        st.altair_chart(line+scatter, use_container_width=True)
+        line_fig = line_and_scatter(data=data, keyword=keyword)
+        st.altair_chart(line_fig, use_container_width=True)
 
 
 
