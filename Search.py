@@ -9,6 +9,9 @@ from components.post_card import display_post, paginator
 from components.charts import bar, line_and_scatter, wordcloudchart
 from utils.model import download_model, LABELS
 from datetime import datetime
+from stqdm import stqdm
+import pinecone
+from utils.semantics import download_sentence_embedder
 
 st.set_page_config(layout="wide", initial_sidebar_state="collapsed", page_icon="📈")
 
@@ -30,7 +33,6 @@ def isValidComment(comment):
         and (comment.body != "[deleted]") \
         and (not more_than_two_codes(comment.body))
 
-
 @st.experimental_memo(ttl=60*60)
 def scrape(keyword: str, start_date: datetime, end_date: datetime):
     data = []
@@ -40,17 +42,17 @@ def scrape(keyword: str, start_date: datetime, end_date: datetime):
         comments_list = comments.list()
 
         # add the body of the post itself
-        data.append((post.title, post.author, datetime.fromtimestamp(post.created_utc), post.selftext, post.url))
+        data.append((post.title, post.author, datetime.fromtimestamp(post.created_utc), post.selftext, post.url, post.id))
 
         # BFS
         while len(comments_list) > 0:
             comment = comments_list.pop(0)
             if isValidComment(comment):
-                data.append((post.title, comment.author, datetime.fromtimestamp(comment.created_utc), comment.body, post.url))
+                data.append((post.title, comment.author, datetime.fromtimestamp(comment.created_utc), comment.body, post.url, comment.id))
             elif isinstance(comment, praw.models.MoreComments):
                 comments_list.extend(comment.comments())
     
-    df = pd.DataFrame(data, columns=["thread_title", "author", "created_at", "post", "url"])
+    df = pd.DataFrame(data, columns=["thread_title", "author", "created_at", "post", "url", "id"])
     return df[df["created_at"].between(pd.Timestamp(start_date), pd.Timestamp(end_date))]
 
 
@@ -213,13 +215,72 @@ st.info("Use CTRL + CLICK on the points to open the Reddit thread in a new tab!"
 line_fig = line_and_scatter(data=data, keyword=keyword)
 st.altair_chart(line_fig, use_container_width=True)
 
+try:
+    fig = wordcloudchart(data)
+    c3,c4,c5 = st.columns(3)
 
-fig = wordcloudchart(data)
-c3,c4,c5 = st.columns(3)
+    with c3:
+        st.pyplot(fig[0])
+    with c4:
+        st.pyplot(fig[1])
+    with c5:
+        st.pyplot(fig[2])
+except:
+    st.error("Oops! Not enough words to make WorldCloud!")
 
-with c3:
-    st.pyplot(fig[0])
-with c4:
-    st.pyplot(fig[1])
-with c5:
-    st.pyplot(fig[2])
+###############################################################################################
+### Push to Vector DB
+###############################################################################################
+
+st.info("Push to database - we are collecting this data for our vector database. You can re-retrieve this data \
+    via semantic search at the next page", icon="ℹ️")
+
+# init pinecone session
+pinecone.init(
+    api_key="6bd0fca0-81e9-4bf6-92d8-cbf24b4dac85",
+    environment="us-west1-gcp"
+)
+
+# init retriever
+retriever = download_sentence_embedder()
+
+index_name = "nus-sentiment" ## replace later
+
+# check if the sentiment-mining index exists
+if index_name not in pinecone.list_indexes():
+    # create the index if it does not exist
+    pinecone.create_index(
+        index_name,
+        dimension=384,
+        metric="cosine"
+    )
+
+index = pinecone.Index(index_name)
+
+def push_to_pinecone(df: pd.DataFrame, retriever, index):
+    batch_size=64
+
+    for i in stqdm(range(0, len(df), batch_size)):
+        # find end of batch
+        i_end = min(i+batch_size, len(df))
+        # extract batch
+        batch = df.iloc[i:i_end]
+        # generate embeddings for batch
+        emb = retriever.encode(batch["post"].tolist()).tolist()
+        # convert review_date to timestamp to enable period filters
+        # timestamp = get_timestamp(batch["created_at"].tolist())
+        # get metadata
+        meta = batch.to_dict(orient="records")
+        # create unique IDs
+        ids = list(batch["id"])
+        # create list to upsert
+        to_upsert = list(zip(ids, emb, meta))
+        # upsert to pinecone
+        _ = index.upsert(vectors=to_upsert)
+    
+    return index.describe_index_stats()
+
+push = st.button("Push!")
+if push:
+    stats=push_to_pinecone(df=data, retriever=retriever, index=index)
+    st.success("Done. Thank you for your contribution!")

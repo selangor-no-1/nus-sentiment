@@ -17,8 +17,3 @@ hide_streamlit_style = """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
 text = st.text_input(label="Input the text you want to analyse")
 st.write(f"You inputted: \n {text}")
-
-out = nlp(text)
-label = out[0]["label"]
-confidence = out[0]["score"]
-st.write(LABELS[label], confidence)
