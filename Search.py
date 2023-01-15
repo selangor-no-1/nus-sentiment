@@ -33,6 +33,8 @@ db = deta.Base("usage-db")
 # Data Functions
 ####################################################################################################
 
+creators = set(["mt", "minh tuan", "up", "utkarsh", "ly", "li yang", "jk", "jake"])
+
 # collection of bools to check whether we want to include a post or not
 def isValidComment(comment):
     return (not isinstance(comment, praw.models.MoreComments)) \
@@ -40,10 +42,29 @@ def isValidComment(comment):
         and (comment.body != "[deleted]") \
         and (not more_than_two_codes(comment.body))
 
+def easter_egg(keyword: str):
+    data = []
+    if keyword == "mt" or keyword == "minh tuan":
+        text = "A devillishly handsome man.\nObsessed with football."
+        data.append(("Applied Math - CS", "MT Nguyen", datetime.now(), text, "https://www.instagram.com/nmtuan_14/", 14))
+    elif keyword == "up" or keyword == "utkarsh":
+        text = "May be a human? Mainly here for diversity."
+        data.append(("Data Science Wannabe", "Utkarsh Pundir", datetime.now(), text, "https://www.utkarsh.com/", 26))
+    elif keyword == "ly" or keyword == "li yang":
+        text = "I have a pink mouse."
+        data.append(("Data Science", "Li Yang", datetime.now(), text, "https://www.hewliyang.tech/", 69))
+    elif keyword == "jk" or keyword == "jake khoo":
+        text = "A disappointing specimen of a man. Uses Tiktok."
+        data.append(("Appplied Math - BA", "Jake Khoo", datetime.now(), text, "https://www.tiktok.com/@0kaydxraa/video/7095227114454027521?lang=en", 96))
+
+    return pd.DataFrame(data, columns=["thread_title", "author", "created_at", "post", "url", "id"])
+
 @st.experimental_memo(ttl=60*60)
 def scrape(keyword: str, start_date: datetime, end_date: datetime):
-    data = []
+    if keyword in creators:
+        return easter_egg(keyword)
 
+    data = []
     for post in nus_sub.search(keyword):
         comments = post.comments
         comments_list = comments.list()
@@ -164,7 +185,20 @@ if module:
 # truncate the post lengths before passing to the NLP pipline. max tokens: 514
 data["post"] = data["post"].str[:1500]
 
-res = get_sentiment(nlp, data["post"].tolist())
+if keyword == "mt" or keyword == "minh tuan":
+    text = "A devillishly handsome man.\nObsessed with football."
+    res = [("negative", 0.99)]
+elif keyword == "up" or keyword == "utkarsh":
+    text = "May be a human? Mainly here for diversity."
+    res = [("positive", 0.99)]
+elif keyword == "ly" or keyword == "li yang":
+    text = "I have a pink mouse."
+    res = [("neutral", 0.0)]
+elif keyword == "jk" or keyword == "jake khoo":
+    text = "A disappointing specimen of a man. Uses Tiktok."
+    res = [("negative", 0.5)]
+else:
+    res = get_sentiment(nlp, data["post"].tolist())
 
 check = db.get(keyword.upper())
 if check:

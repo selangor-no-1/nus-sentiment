@@ -3,6 +3,8 @@ import streamlit as st
 
 def display_post(dict: dict):
     for k, v in dict.items():
+        if k == "id":
+            continue
         a, b = st.columns([1,4])
         a.write(f"**{k.replace('_', ' ').capitalize()}:**")
         b.write(v)
