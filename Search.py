@@ -111,7 +111,7 @@ hide_streamlit_style = """
         button:hover {background-color: #ff5138;}
         button:focus {box-shadow: #ff5138;}
         </style>
-        <h1>Semantic Search</h1>
+        <h1>NUS Sentiment</h1>
         """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
 st.markdown("### Scrape posts from [`r/NUS`](https://www.reddit.com/r/nus)")
