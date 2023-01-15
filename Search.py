@@ -217,20 +217,20 @@ with st.expander("View posts"):
 
 
 fig = bar(counts=counts)
-c1, c2 = st.columns(2)
+c1, c2,c3 = st.columns([1,1,2])
 
 with c1:
     st.markdown('')
-    st.markdown('')
-    st.markdown("**Summary statistics:**")
-    st.markdown(':green[Positive posts 😊:] ' + str(counts['positive']))
-    st.markdown('Neutral posts 😐: ' + str(counts['neutral']))
-    st.markdown(':red[Negative posts 😔:] ' + str(counts['negative']))
-    st.markdown("Total posts: " + str(counts['positive'] + counts['negative'] + counts['neutral']))
+    st.markdown("#### Summary statistics:")
+    st.markdown("---")
+    st.markdown('##### **:green[Positive Posts 😊:]** ' + str(counts['positive']))
+    st.markdown('##### **:blue[Neutral posts 😐:]** ' + str(counts['neutral']))
+    st.markdown('##### **:red[Negative posts 😔:]** ' + str(counts['negative']))
+    st.markdown("##### Total posts: " + str(counts['positive'] + counts['negative'] + counts['neutral']))
     sentiment_float = data['sentiment'].mean()
-    st.markdown("Average sentiment: " + str(float(f'{sentiment_float:.3f}')))
-    st.markdown("First post: " + str(data['created_at'].min()))
-    st.markdown("Last post: " + str(data['created_at'].max()))
+    st.markdown("##### Average sentiment: " + str(float(f'{sentiment_float:.3f}')))
+    st.markdown("##### First post: " + str(data['created_at'].min()))
+    st.markdown("##### Last post: " + str(data['created_at'].max()))
 
 with c2:
 
