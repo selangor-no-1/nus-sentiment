@@ -1,9 +1,12 @@
 import streamlit as st
 import pandas as pd
 import pinecone
+import requests
 from utils.semantics import download_sentence_embedder
 from components.post_card import display_post, paginator
 from components.charts import pie, line_and_scatter
+
+st.set_page_config(layout="wide", page_icon="📈", page_title="Semantic Search")
 
 # init pinecone session
 pinecone.init(
@@ -44,6 +47,22 @@ hide_streamlit_style = """
         <h1>Semantic Search</h1>
         """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
+
+st.info('''
+Unsatisfied with the results? Help us by heading the the **Search** page and inputting a related keyword to gather more data!
+''', icon="ℹ️")
+
+PINECONE_API_KEY = st.secrets["PINECONE_KEY"]
+try:
+    stats = requests.get("https://nus-sentiment-a01055d.svc.us-west1-gcp.pinecone.io/describe_index_stats",
+        headers={"Api-Key":PINECONE_API_KEY})
+    fullness = stats.json()["indexFullness"]
+    total_entries = stats.json()["totalVectorCount"]
+    st.markdown("### Database Statistics")
+    st.markdown(f"###### Fullness [0,1] : {fullness}")
+    st.markdown(f"###### Total Posts : {total_entries}")
+except:
+    pass
 
 with st.form("Semantic Search [Fast!]"):
     query = st.text_input(label="Input your query here", placeholder="Is CS1010S a very difficult subject?")

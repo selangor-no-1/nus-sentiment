@@ -12,6 +12,8 @@ db = deta.Base("usage-db")
 ### UI Start
 ##############################################################################################
 
+st.set_page_config(layout="wide", page_icon="📈", page_title="About")
+
 hide_streamlit_style = """
         <style>
         #MainMenu {visibility: hidden;}
@@ -29,9 +31,16 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 
 st.markdown('')
-st.markdown("Made for Hack & Roll 2023")
-st.markdown('Made By: Jake Khoo, Hew Li Yang, Minh Tuan, Utkarsh Pundir')
+st.markdown("### A NUS [Hack&Roll 2023](https://devpost.com/software/nus-sentiment) Submission")
+st.markdown('''
+#### Made with love by: 
+- Jake Khoo
+- Hew Li Yang 
+- Nguyen Minh Tuan 
+- Utkarsh Pundir
+''')
 
+st.markdown("##### Check out the most searched terms! (dynamically updated)")
 
 d = db.fetch().items
 counts = pd.DataFrame.from_records(d).sort_values(by = "value")
