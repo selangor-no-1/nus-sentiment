@@ -217,7 +217,7 @@ with st.expander("View posts"):
 
 
 fig = bar(counts=counts)
-c1, c2,c3 = st.columns(2, gap="large")
+c1, c2 = st.columns(2, gap="large")
 
 with c1:
     st.markdown('')
