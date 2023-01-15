@@ -135,6 +135,8 @@ hide_streamlit_style = """
         <h1>NUS Sentiment</h1>
         """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
+
+st.info('Hi! Here from **Hack&Roll**? Please note that the Reddit API has a rate-limit of 60 requests per minute so search may be slow! We will be adding an option for you to use your own authentication credentials soon!', icon="ℹ️")
 st.markdown("### Scrape posts from [`r/NUS`](https://www.reddit.com/r/nus)")
 
 
