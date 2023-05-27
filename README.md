@@ -41,13 +41,13 @@ You can choose to omit `USERNAME` and `PASSWORD`. If you choose to do so remove 
 
 ## Powered By
 <div align="center">
-  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Reddit_logo_new.svg/487px-Reddit_logo_new.svg.png?20220313085316" alt="reddit" width="100"/> 
+  <img src="https://cdn.worldvectorlogo.com/logos/reddit-logo-new.svg" alt="reddit" width="100"/> 
   <br />
   <br />
   <img src="https://d33wubrfki0l68.cloudfront.net/682006698903a55560c796b901fdfe4446c6d27a/a00ee/images/pinecone-logo.svg" alt="pinecone" width="150" />   
   <br />
   <br />
-  <img src="https://www.deta.sh/dist/images/deta_logo.svg" alt="deta" width="150" />  
+  <img src="https://docs.deta.sh/img/logo.svg" alt="deta" width="150" />  
   <br />
   <br />
   <img src="https://streamlit.io/images/brand/streamlit-mark-color.svg" alt="streamlit" width="100" /> 
